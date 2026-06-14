@@ -5,7 +5,7 @@ const { asyncHandler } = require('../middleware/error');
 const { authenticate } = require('../middleware/auth');
 const config = require('../config');
 const retrieval = require('../services/retrieval');
-const gemini = require('../services/gemini');
+const llm = require('../services/llm');
 const { buildRagPrompt, noDataMessage } = require('../services/prompt');
 
 const router = express.Router();
@@ -74,7 +74,7 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
   const structured = await retrieval.fetchStructured(brandId);
   const context = retrieval.buildContext(chunks, structured);
   const prompt = buildRagPrompt({ context, question, lang });
-  const answer = await gemini.generate(prompt);
+  const answer = await llm.generate(prompt);
 
   // The model may still refuse if context doesn't actually contain the answer.
   const refusedByModel = answer.includes(noDataMessage(lang)) || answer.toLowerCase().includes('no data available');

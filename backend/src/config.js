@@ -27,6 +27,14 @@ const config = {
     chatModel: process.env.GEMINI_CHAT_MODEL || 'gemini-2.0-flash',
   },
 
+  // Which provider writes the final RAG answer. Defaults to Claude when an
+  // Anthropic key is present, otherwise Gemini. Embeddings always use Gemini.
+  answerProvider: process.env.ANSWER_PROVIDER || (process.env.ANTHROPIC_API_KEY ? 'claude' : 'gemini'),
+  anthropic: {
+    apiKey: process.env.ANTHROPIC_API_KEY || '',
+    model: process.env.ANSWER_MODEL || 'claude-opus-4-8',
+  },
+
   retrieval: {
     threshold: num(process.env.SIMILARITY_THRESHOLD, 0.75),
     topK: num(process.env.RETRIEVAL_TOP_K, 6),
