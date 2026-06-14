@@ -19,7 +19,7 @@ function ensureKey() {
  * @param {string} text
  * @returns {Promise<number[]>}
  */
-async function embed(text) {
+async function embed(text, taskType) {
   ensureKey();
   const model = config.gemini.embedModel;
   const url = `${BASE}/models/${model}:embedContent?key=${config.gemini.apiKey}`;
@@ -28,6 +28,9 @@ async function embed(text) {
   // force 768 to match VECTOR(768). text-embedding-004 is natively 768 and
   // rejects this param, so only send it for gemini-embedding-* models.
   if (/gemini-embedding/.test(model)) reqBody.outputDimensionality = config.gemini.embedDim;
+  // Asymmetric task types sharpen retrieval: documents stored as
+  // RETRIEVAL_DOCUMENT, queries embedded as RETRIEVAL_QUERY.
+  if (taskType) reqBody.taskType = taskType;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

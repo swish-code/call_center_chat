@@ -14,7 +14,7 @@ const retrieval = require('./retrieval');
 async function addChunk({ brandId, content, language, source, createdBy }, client) {
   const runner = client || { query };
   const lang = language || retrieval.detectLanguage(content);
-  const vec = await gemini.embed(content);
+  const vec = await gemini.embed(content, 'RETRIEVAL_DOCUMENT');
   const literal = gemini.toVectorLiteral(vec);
   const { rows } = await runner.query(
     `INSERT INTO knowledge_chunks (brand_id, language, content, embedding, source, created_by)
