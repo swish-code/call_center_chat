@@ -22,7 +22,8 @@ const config = {
 
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || '',
-    embedModel: process.env.GEMINI_EMBED_MODEL || 'text-embedding-004',
+    embedModel: process.env.GEMINI_EMBED_MODEL || 'gemini-embedding-001',
+    embedDim: num(process.env.GEMINI_EMBED_DIM, 768),
     chatModel: process.env.GEMINI_CHAT_MODEL || 'gemini-2.0-flash',
   },
 
