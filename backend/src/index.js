@@ -19,6 +19,7 @@ app.use('/knowledge', require('./routes/knowledge'));
 app.use('/', require('./routes/structured'));          // /branches/:id, /pricing/:id
 app.use('/chat', require('./routes/chat'));
 app.use('/gaps', require('./routes/gaps'));
+app.use('/notifications', require('./routes/notifications'));
 app.use('/info-requests', require('./routes/infoRequests'));
 app.use('/analytics', require('./routes/analytics'));
 app.use('/jobs', require('./routes/jobs'));

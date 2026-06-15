@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { getUser, clearSession } from '@/lib/api';
+import NotificationCenter from '@/components/NotificationCenter';
 
 // Which roles may access each route. Enforced here so direct URL entry is
 // blocked too (not just hidden from the sidebar) — Role-Based Access Control.
@@ -53,7 +54,10 @@ export default function Shell({ children }) {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <h1>Call Center AI</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <h1 style={{ margin: 0 }}>Call Center AI</h1>
+          <NotificationCenter />
+        </div>
         {nav.map((n) => (
           <Link key={n.href} href={n.href} className={pathname === n.href ? 'active' : ''}>
             {n.label}

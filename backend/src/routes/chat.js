@@ -6,7 +6,16 @@ const { authenticate } = require('../middleware/auth');
 const config = require('../config');
 const retrieval = require('../services/retrieval');
 const llm = require('../services/llm');
+const notify = require('../services/notify');
 const { buildRagPrompt, noDataMessage } = require('../services/prompt');
+
+// Alert leaders/admins when a gap is auto-opened from the chat flow.
+function alertGap(question, agentName) {
+  notify.notifyRoles(['admin', 'team_leader'], {
+    type: 'gap_new', title: String(question).slice(0, 90),
+    body: `New gap request from ${agentName}`, link: '/gaps',
+  }).catch(() => {});
+}
 
 const router = express.Router();
 
@@ -61,6 +70,7 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
       );
       return rows[0];
     });
+    alertGap(question, req.user.name);
     return res.json({
       conversationId,
       answer: refusal,
@@ -98,6 +108,7 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
       [question, conversationId, brandId || null, req.user.sub]
     );
     gapRequestId = rows[0].id;
+    alertGap(question, req.user.name);
   }
 
   res.json({

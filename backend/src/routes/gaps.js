@@ -5,6 +5,7 @@ const { asyncHandler } = require('../middleware/error');
 const { authenticate, requireRole } = require('../middleware/auth');
 const knowledge = require('../services/knowledge');
 const audit = require('../services/audit');
+const notify = require('../services/notify');
 
 const router = express.Router();
 
@@ -17,6 +18,13 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
      VALUES ($1, $2, $3, $4, 'open') RETURNING *`,
     [question, conversationId || null, brandId || null, req.user.sub]
   );
+  // Real-time: alert all leaders/admins about the new gap.
+  notify.notifyRoles(['admin', 'team_leader'], {
+    type: 'gap_new',
+    title: question.slice(0, 90),
+    body: `New gap request from ${req.user.name}`,
+    link: '/gaps',
+  }).catch(() => {});
   res.status(201).json(rows[0]);
 }));
 
@@ -49,6 +57,12 @@ router.patch('/:id', authenticate, requireRole('team_leader', 'admin'), asyncHan
     );
     if (!rows[0]) return res.status(404).json({ error: 'Open gap not found' });
     await audit.record({ userId: req.user.sub, action: 'reject', entity: 'gap_request', entityId: req.params.id });
+    notify.notifyUser({
+      userId: rows[0].raised_by, type: 'gap_rejected',
+      title: 'Gap request reviewed',
+      body: 'Your gap request was reviewed and not added to the knowledge base.',
+      link: '/chat',
+    }).catch(() => {});
     return res.json(rows[0]);
   }
 
@@ -79,6 +93,13 @@ router.patch('/:id', authenticate, requireRole('team_leader', 'admin'), asyncHan
     return gap;
   });
   if (!result) return res.status(404).json({ error: 'Open gap not found' });
+  // Real-time: tell the agent who raised it that it was approved.
+  notify.notifyUser({
+    userId: result.raised_by, type: 'gap_approved',
+    title: 'Gap request approved',
+    body: 'Your Gap Request has been approved and added to the Knowledge Base.',
+    link: '/chat',
+  }).catch(() => {});
   res.json(result);
 }));
 
