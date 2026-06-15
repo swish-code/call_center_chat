@@ -14,7 +14,11 @@ export default function ChatPage() {
   const endRef = useRef(null);
 
   useEffect(() => {
-    api('/brands').then(setBrands).catch((e) => setError(e.message));
+    api('/brands').then((bs) => {
+      setBrands(bs);
+      // No "All brands" option — default to the first brand so one is always selected.
+      if (bs.length) setBrandId((cur) => cur || String(bs[0].id));
+    }).catch((e) => setError(e.message));
   }, []);
 
   useEffect(() => {
@@ -56,7 +60,6 @@ export default function ChatPage() {
         <h2>AI Chat</h2>
         <div style={{ width: 240 }}>
           <select value={brandId} onChange={(e) => setBrandId(e.target.value)}>
-            <option value="">All brands</option>
             {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </div>
