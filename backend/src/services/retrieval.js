@@ -20,8 +20,11 @@ async function searchChunks(queryText, brandId, topK = config.retrieval.topK) {
   const params = [literal, topK];
   let where = 'WHERE embedding IS NOT NULL';
   if (brandId) {
+    // Include the selected brand AND global (brand-less) knowledge — extensions,
+    // Kuwaiti terms, scripts, policies apply across brands, so a brand filter
+    // must not hide them.
     params.push(brandId);
-    where += ` AND brand_id = $${params.length}`;
+    where += ` AND (brand_id = $${params.length} OR brand_id IS NULL)`;
   }
   const sql = `
     SELECT id, brand_id, content, language, source,
