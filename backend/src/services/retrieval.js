@@ -44,6 +44,8 @@ const BRAND_ALIASES = {
   'Pattie Pattie': ['pattie pattie', 'pattie', 'باتي باتي', 'باتي'],
   'Just C': ['just c', 'جست سي', 'جست'],
   'Chili pepper': ['chili pepper', 'chili', 'chilli', 'تشيلي بيبر', 'تشيلي', 'شيلي'],
+  'Tabel': ['tabel', 'tabl', 'تابل', 'طابل'],
+  'Mishmash': ['mishmash', 'mish mash', 'ميش ماش', 'مشمش'],
 };
 
 /** Detect a brand mentioned in free text; returns its id or null. */
