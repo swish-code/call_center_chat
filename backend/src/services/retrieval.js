@@ -15,7 +15,7 @@ function detectLanguage(text) {
  * pgvector's <=> is cosine DISTANCE, so similarity = 1 - distance.
  */
 async function searchChunks(queryText, brandId, topK = config.retrieval.topK) {
-  const vec = await gemini.embed(queryText, 'RETRIEVAL_QUERY');
+  const vec = await gemini.embed(queryText);
   const literal = gemini.toVectorLiteral(vec);
   const params = [literal, topK];
   let where = 'WHERE embedding IS NOT NULL';
