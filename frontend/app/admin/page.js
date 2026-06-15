@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Shell from '@/components/Shell';
-import { api } from '@/lib/api';
+import { api, getUser } from '@/lib/api';
 
 export default function AdminPage() {
   const [tab, setTab] = useState('brands');
@@ -68,11 +68,29 @@ function Users() {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'agent' });
   const [error, setError] = useError();
+  const me = getUser();
   const load = () => api('/auth/users').then(setUsers).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);
   async function add(e) {
     e.preventDefault();
+    setError('');
     try { await api('/auth/register', { method: 'POST', body: form }); setForm({ name: '', email: '', password: '', role: 'agent' }); load(); }
+    catch (err) { setError(err.message); }
+  }
+  async function changeRole(id, role) {
+    setError('');
+    try { await api(`/auth/users/${id}`, { method: 'PATCH', body: { role } }); load(); }
+    catch (err) { setError(err.message); }
+  }
+  async function toggleActive(u) {
+    setError('');
+    try { await api(`/auth/users/${u.id}`, { method: 'PATCH', body: { active: !u.active } }); load(); }
+    catch (err) { setError(err.message); }
+  }
+  async function del(u) {
+    if (!confirm(`Delete user ${u.email}?`)) return;
+    setError('');
+    try { await api(`/auth/users/${u.id}`, { method: 'DELETE' }); load(); }
     catch (err) { setError(err.message); }
   }
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -96,8 +114,28 @@ function Users() {
         </div>
       </form>
       <table style={{ marginTop: 14 }}>
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
-        <tbody>{users.map((u) => <tr key={u.id}><td>{u.name}</td><td>{u.email}</td><td>{u.role}</td></tr>)}</tbody>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>{users.map((u) => {
+          const self = me && u.id === me.id;
+          return (
+            <tr key={u.id} style={{ opacity: u.active ? 1 : 0.5 }}>
+              <td>{u.name}{self && <span className="muted"> (you)</span>}</td>
+              <td>{u.email}</td>
+              <td>
+                <select value={u.role} disabled={self} onChange={(e) => changeRole(u.id, e.target.value)}>
+                  <option value="agent">agent</option>
+                  <option value="team_leader">team_leader</option>
+                  <option value="admin">admin</option>
+                </select>
+              </td>
+              <td>{u.active ? <span style={{ color: '#22c55e' }}>active</span> : <span style={{ color: '#f59e0b' }}>disabled</span>}</td>
+              <td className="row" style={{ gap: 6 }}>
+                <button className="ghost" disabled={self} onClick={() => toggleActive(u)}>{u.active ? 'Disable' : 'Enable'}</button>
+                <button className="danger" disabled={self} onClick={() => del(u)}>Delete</button>
+              </td>
+            </tr>
+          );
+        })}</tbody>
       </table>
     </div>
   );

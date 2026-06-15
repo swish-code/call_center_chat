@@ -4,19 +4,35 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { getUser, clearSession } from '@/lib/api';
 
-// App shell with role-aware navigation. Redirects to /login if no session.
+// Which roles may access each route. Enforced here so direct URL entry is
+// blocked too (not just hidden from the sidebar) — Role-Based Access Control.
+const ROUTE_ROLES = {
+  '/chat': ['agent', 'team_leader', 'admin'],
+  '/gaps': ['team_leader', 'admin'],
+  '/info-requests': ['team_leader', 'admin'],
+  '/dashboard': ['admin'],
+  '/admin': ['admin'],
+};
+
+// App shell with role-aware navigation + RBAC route guard.
 export default function Shell({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState(null);
+  const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
     const u = getUser();
-    if (!u) router.replace('/login');
-    else setUser(u);
-  }, [router]);
+    if (!u) { router.replace('/login'); return; }
+    // RBAC: if this user's role isn't allowed for the current route, bounce
+    // them to Chat (the one page everyone can see) — even on direct URL entry.
+    const roles = ROUTE_ROLES[pathname];
+    if (roles && !roles.includes(u.role)) { router.replace('/chat'); return; }
+    setUser(u);
+    setAllowed(true);
+  }, [router, pathname]);
 
-  if (!user) return null;
+  if (!user || !allowed) return null;
 
   const isLeader = user.role === 'team_leader' || user.role === 'admin';
   const isAdmin = user.role === 'admin';
@@ -25,7 +41,7 @@ export default function Shell({ children }) {
     { href: '/chat', label: '💬 Chat', show: true },
     { href: '/gaps', label: '📋 Gap Requests', show: isLeader },
     { href: '/info-requests', label: '📨 Info Requests', show: isLeader },
-    { href: '/dashboard', label: '📊 Dashboard', show: isLeader },
+    { href: '/dashboard', label: '📊 Dashboard', show: isAdmin },
     { href: '/admin', label: '⚙️ Admin', show: isAdmin },
   ].filter((n) => n.show);
 
