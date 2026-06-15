@@ -71,7 +71,11 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
   }
 
   // 3. Build context + ask Gemini.
-  const structured = await retrieval.fetchStructured(brandId);
+  // Enrich with structured data for the selected brand, or — when on "All
+  // brands" — for a brand detected in the question text (so counts/prices for
+  // "كم فرع ليلو بيتزا" are exact even without using the filter).
+  const structuredBrandId = brandId || (await retrieval.detectBrandId(question));
+  const structured = await retrieval.fetchStructured(structuredBrandId);
   const context = retrieval.buildContext(chunks, structured);
   const prompt = buildRagPrompt({ context, question, lang });
   const answer = await llm.generate(prompt);

@@ -34,6 +34,30 @@ async function searchChunks(queryText, brandId, topK = config.retrieval.topK) {
   return rows;
 }
 
+// Brand aliases (Arabic + English) for detecting a brand mentioned in a question
+// even when the UI filter is on "All brands".
+const BRAND_ALIASES = {
+  'Shawarma Shakir': ['shawarma shakir', 'shakir', 'شاورما شاكر', 'شاكر'],
+  'Yelo Pizza': ['yelo pizza', 'yelo', 'يلو بيتزا', 'يلو'],
+  'BBT': ['bbt', 'بي بي تي'],
+  'Slice': ['slice', 'سلايس'],
+  'Pattie Pattie': ['pattie pattie', 'pattie', 'باتي باتي', 'باتي'],
+  'Just C': ['just c', 'جست سي', 'جست'],
+  'Chili pepper': ['chili pepper', 'chili', 'chilli', 'تشيلي بيبر', 'تشيلي', 'شيلي'],
+};
+
+/** Detect a brand mentioned in free text; returns its id or null. */
+async function detectBrandId(text) {
+  if (!text) return null;
+  const lower = String(text).toLowerCase();
+  const { rows } = await query('SELECT id, name FROM brands');
+  for (const r of rows) {
+    const aliases = BRAND_ALIASES[r.name] || [r.name.toLowerCase()];
+    if (aliases.some((a) => lower.includes(a.toLowerCase()))) return r.id;
+  }
+  return null;
+}
+
 /** Pull structured branch/pricing rows for a brand to enrich the context. */
 async function fetchStructured(brandId) {
   if (!brandId) return { branches: [], pricing: [] };
@@ -52,17 +76,17 @@ function buildContext(chunks, structured) {
     chunks.forEach((c, i) => parts.push(`[${i + 1}] ${c.content}`));
   }
   if (structured.branches.length) {
-    parts.push('\n# Branches');
+    parts.push(`\n# Branches (total: ${structured.branches.length})`);
     structured.branches.forEach((b) =>
       parts.push(`- ${b.name}${b.city ? ', ' + b.city : ''}${b.address ? ' — ' + b.address : ''}` +
         `${b.phone ? ' | tel: ' + b.phone : ''}${b.working_hours ? ' | hours: ' + b.working_hours : ''}`));
   }
   if (structured.pricing.length) {
-    parts.push('\n# Pricing');
+    parts.push(`\n# Pricing (total: ${structured.pricing.length})`);
     structured.pricing.forEach((p) =>
       parts.push(`- ${p.item_name}: ${p.price} ${p.currency}${p.notes ? ' (' + p.notes + ')' : ''}`));
   }
   return parts.join('\n');
 }
 
-module.exports = { detectLanguage, searchChunks, fetchStructured, buildContext };
+module.exports = { detectLanguage, detectBrandId, searchChunks, fetchStructured, buildContext };
