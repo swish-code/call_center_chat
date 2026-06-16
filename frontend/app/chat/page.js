@@ -19,9 +19,19 @@ export default function ChatPage() {
   useEffect(() => {
     api('/brands').then((bs) => {
       setBrands(bs);
-      if (bs.length) setBrandId((cur) => cur || String(bs[0].id));
+      if (!bs.length) return;
+      // Restore the last brand the user picked (survives refresh / reopen);
+      // fall back to the first brand only if there's no valid saved choice.
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('cc_brand') : null;
+      const valid = saved && bs.some((b) => String(b.id) === saved);
+      setBrandId((cur) => cur || (valid ? saved : String(bs[0].id)));
     }).catch((e) => setError(e.message));
   }, []);
+
+  // Persist the selected brand whenever it changes.
+  useEffect(() => {
+    if (brandId && typeof window !== 'undefined') localStorage.setItem('cc_brand', brandId);
+  }, [brandId]);
 
   // Load saved conversations so the chat survives a refresh and can be revisited any day.
   async function loadHistory(autoOpenLatest) {
