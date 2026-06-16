@@ -27,9 +27,8 @@ a { color: var(--accent); text-decoration: none; }
 .sidebar {
   width: 220px; background: var(--panel); border-right: 1px solid var(--border);
   padding: 20px 14px; display: flex; flex-direction: column; gap: 4px;
-  /* Stay pinned while the main content scrolls, so navigation is always reachable. */
-  position: sticky; top: 0; align-self: flex-start;
-  height: 100vh; overflow-y: auto;
+  /* Pinned to the viewport so navigation stays visible while the page scrolls. */
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 40; overflow-y: auto;
 }
 .sidebar h1 { font-size: 16px; margin: 0 0 16px; }
 .sidebar a {
@@ -40,7 +39,7 @@ a { color: var(--accent); text-decoration: none; }
 .sidebar .spacer { flex: 1; }
 .sidebar .userbox { font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 12px; }
 
-.main { flex: 1; padding: 28px 32px; max-width: 1100px; }
+.main { flex: 1; padding: 28px 32px; max-width: 1100px; margin-left: 220px; }
 .main h2 { margin-top: 0; }
 
 .card {
@@ -108,7 +107,7 @@ th { color: var(--muted); font-weight: 600; }
   .sidebar.open { transform: translateX(0); box-shadow: 0 0 50px rgba(0,0,0,.6); }
   .sidebar-overlay.show { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 85; }
 
-  .main { padding: 64px 16px 24px; max-width: 100%; }
+  .main { padding: 64px 16px 24px; max-width: 100%; margin-left: 0; }
   .card { padding: 14px; }
   .card table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
 
