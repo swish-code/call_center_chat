@@ -7,7 +7,7 @@ function noDataMessage(lang) {
   return lang === 'ar' ? NO_DATA.ar : NO_DATA.en;
 }
 
-function buildRagPrompt({ context, question, lang }) {
+function buildRagPrompt({ context, question, lang, replyTo }) {
   const refusal = noDataMessage(lang);
   const noneAr = 'لا يوجد فرع أو عنصر يطابق هذا الشرط';
   const noneEn = 'No branch/item matches this condition';
@@ -26,7 +26,7 @@ Two distinct cases — do NOT confuse them:
 
 CONTEXT:
 ${context || '(empty)'}
-
+${replyTo ? `\nThe user is replying to / following up on this earlier message:\n"${replyTo}"\nUse it to resolve references in the QUESTION (e.g. "it", "that branch", "its price").\n` : ''}
 QUESTION:
 ${question}`;
 }

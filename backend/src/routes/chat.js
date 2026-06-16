@@ -29,11 +29,15 @@ const router = express.Router();
  *   4. log conversation + messages
  */
 router.post('/', authenticate, asyncHandler(async (req, res) => {
-  const { question, brandId } = req.body || {};
+  const { question, brandId, replyTo } = req.body || {};
   let { conversationId } = req.body || {};
   if (!question || !question.trim()) return res.status(400).json({ error: 'question required' });
 
   const lang = retrieval.detectLanguage(question);
+  // When replying to an earlier message, fold its text into the retrieval query
+  // so follow-ups ("and its price?") still find the right content.
+  const reply = replyTo ? String(replyTo).slice(0, 600) : null;
+  const searchText = reply ? `${reply}\n${question}` : question;
 
   // Ensure a conversation exists for this agent.
   if (!conversationId) {
@@ -51,7 +55,7 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
   );
 
   // 1. Retrieve.
-  const chunks = await retrieval.searchChunks(question, brandId);
+  const chunks = await retrieval.searchChunks(searchText, brandId);
   const topSimilarity = chunks.length ? Number(chunks[0].similarity) : 0;
 
   // 2. Confidence gate — refuse below threshold and open a gap ticket.
@@ -84,10 +88,10 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
   // Enrich with structured data for the selected brand, or — when on "All
   // brands" — for a brand detected in the question text (so counts/prices for
   // "كم فرع ليلو بيتزا" are exact even without using the filter).
-  const structuredBrandId = brandId || (await retrieval.detectBrandId(question));
+  const structuredBrandId = brandId || (await retrieval.detectBrandId(searchText));
   const structured = await retrieval.fetchStructured(structuredBrandId);
   const context = retrieval.buildContext(chunks, structured);
-  const prompt = buildRagPrompt({ context, question, lang });
+  const prompt = buildRagPrompt({ context, question, lang, replyTo: reply });
   const answer = await llm.generate(prompt);
 
   // The model may still refuse if context doesn't actually contain the answer.

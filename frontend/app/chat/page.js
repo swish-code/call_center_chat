@@ -12,6 +12,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [history, setHistory] = useState([]);
+  const [replyTo, setReplyTo] = useState(null); // message being replied to
   const endRef = useRef(null);
   const [user] = useState(() => (typeof window !== 'undefined' ? getUser() : null));
 
@@ -56,14 +57,19 @@ export default function ChatPage() {
     e.preventDefault();
     const question = input.trim();
     if (!question) return;
+    const replied = replyTo;            // capture before clearing
     setInput('');
     setError('');
-    setMessages((m) => [...m, { role: 'user', content: question }]);
+    setReplyTo(null);
+    setMessages((m) => [...m, { role: 'user', content: question, replyPreview: replied ? replied.content : null }]);
     setLoading(true);
     try {
       const res = await api('/chat', {
         method: 'POST',
-        body: { question, brandId: brandId || undefined, conversationId: conversationId || undefined },
+        body: {
+          question, brandId: brandId || undefined, conversationId: conversationId || undefined,
+          replyTo: replied ? replied.content : undefined,
+        },
       });
       setConversationId(res.conversationId);
       setMessages((m) => [...m, {
@@ -121,7 +127,12 @@ export default function ChatPage() {
               <p className="muted">Ask a question in Arabic or English. The AI answers only from the approved knowledge base.</p>
             )}
             {messages.map((m, i) => (
-              <div key={i} className={`msg ${m.role}${m.role === 'assistant' && m.answered === false ? ' refusal' : ''}`}>
+              <div key={i} className={`msg ${m.role}${m.role === 'assistant' && m.answered === false ? ' refusal' : ''}`} style={{ position: 'relative' }}>
+                {m.replyPreview && (
+                  <div style={{ borderInlineStart: '3px solid rgba(255,255,255,.5)', paddingInlineStart: 8, marginBottom: 6, fontSize: 12, opacity: .8 }}>
+                    ↩ {m.replyPreview.slice(0, 70)}{m.replyPreview.length > 70 ? '…' : ''}
+                  </div>
+                )}
                 {m.content}
                 {m.role === 'assistant' && m.confidence != null && (
                   <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
@@ -129,6 +140,8 @@ export default function ChatPage() {
                     {m.gapRequestId && ' · gap ticket opened for Team Leader'}
                   </div>
                 )}
+                <button type="button" title="Reply" onClick={() => setReplyTo({ role: m.role, content: m.content })}
+                  style={{ position: 'absolute', top: 4, insetInlineEnd: 4, background: 'transparent', border: 'none', color: 'inherit', opacity: .6, padding: 2, fontSize: 13, cursor: 'pointer' }}>↩</button>
               </div>
             ))}
             {loading && <div className="msg assistant muted">…thinking</div>}
@@ -136,6 +149,14 @@ export default function ChatPage() {
           </div>
 
           {error && <p className="error">{error}</p>}
+          {replyTo && (
+            <div className="row" style={{ justifyContent: 'space-between', background: 'var(--panel-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span className="muted">↩ رداً على: </span>{replyTo.content.slice(0, 80)}{replyTo.content.length > 80 ? '…' : ''}
+              </div>
+              <button type="button" className="ghost" onClick={() => setReplyTo(null)} style={{ padding: '2px 8px' }}>×</button>
+            </div>
+          )}
           <form className="composer" onSubmit={send}>
             <input placeholder="Type your question… / اكتب سؤالك" value={input} onChange={(e) => setInput(e.target.value)} />
             <button type="submit" disabled={loading}>Send</button>
