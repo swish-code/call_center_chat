@@ -68,7 +68,7 @@ async function fetchStructured(brandId) {
   if (!brandId) return { brandName: null, branches: [], pricing: [] };
   const [brand, branches, pricing] = await Promise.all([
     query('SELECT name FROM brands WHERE id = $1', [brandId]),
-    query('SELECT name, address, city, phone, working_hours FROM branches WHERE brand_id = $1', [brandId]),
+    query('SELECT name, address, city, phone, working_hours, details FROM branches WHERE brand_id = $1', [brandId]),
     query('SELECT item_name, price, currency, notes FROM pricing WHERE brand_id = $1', [brandId]),
   ]);
   return { brandName: brand.rows[0] ? brand.rows[0].name : null, branches: branches.rows, pricing: pricing.rows };
@@ -86,7 +86,8 @@ function buildContext(chunks, structured) {
     parts.push(`\n# Branches${forBrand} (total: ${structured.branches.length})`);
     structured.branches.forEach((b) =>
       parts.push(`- ${b.name}${b.city ? ', ' + b.city : ''}${b.address ? ' — ' + b.address : ''}` +
-        `${b.phone ? ' | tel: ' + b.phone : ''}${b.working_hours ? ' | hours: ' + b.working_hours : ''}`));
+        `${b.phone ? ' | tel: ' + b.phone : ''}${b.working_hours ? ' | hours: ' + b.working_hours : ''}` +
+        `${b.details ? ' | ' + b.details : ''}`));
   }
   if (structured.pricing.length) {
     parts.push(`\n# Pricing${forBrand} (total: ${structured.pricing.length})`);
