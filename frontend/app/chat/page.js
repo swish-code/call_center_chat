@@ -92,9 +92,9 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, alignItems: 'stretch', marginTop: 8 }}>
+      <div className="chat-layout" style={{ display: 'flex', gap: 16, alignItems: 'stretch', marginTop: 8 }}>
         {/* Saved conversations, grouped by day */}
-        <aside style={{ width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8,
+        <aside className="chat-history" style={{ width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8,
           maxHeight: '72vh', overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,.08)', paddingRight: 12 }}>
           <button type="button" onClick={newChat} style={{ width: '100%' }}>+ محادثة جديدة</button>
           {groups.length === 0 && <p className="muted" style={{ fontSize: 13 }}>لا توجد محادثات محفوظة بعد.</p>}

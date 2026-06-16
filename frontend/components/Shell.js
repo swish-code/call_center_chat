@@ -21,6 +21,7 @@ export default function Shell({ children }) {
   const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [allowed, setAllowed] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const u = getUser();
@@ -32,6 +33,9 @@ export default function Shell({ children }) {
     setUser(u);
     setAllowed(true);
   }, [router, pathname]);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   if (!user || !allowed) return null;
 
@@ -53,7 +57,13 @@ export default function Shell({ children }) {
 
   return (
     <div className="layout">
-      <aside className="sidebar">
+      {/* Mobile hamburger + drawer overlay */}
+      <button className="menu-toggle" onClick={() => setMenuOpen((v) => !v)} aria-label="القائمة">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <div className={`sidebar-overlay ${menuOpen ? 'show' : ''}`} onClick={() => setMenuOpen(false)} />
+
+      <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <h1 style={{ margin: 0 }}>Call Center AI</h1>
           <NotificationCenter />
